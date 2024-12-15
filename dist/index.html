@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en" >
+<head>
+  <meta charset="UTF-8">
+  <title>Hora da selfie</title>
+  
+
+</head>
+<body>
+<!-- partial:index.partial.html -->
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Captura de Selfie</title>
+  <style>
+    #video, #canvas {
+      display: block;
+      margin: 0 auto;
+    }
+    #canvas {
+      display: none;
+    }
+    #controls {
+      text-align: center;
+      margin-top: 20px;
+    }
+    #snap, #retry, #send {
+      display: inline-block;
+      margin: 5px;
+    }
+    #message {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 24px;
+    }
+  </style>
+</head>
+<body>
+  <h1 style="text-align: center;">Serra e Tuaf Advogados</h1>
+  <div id="message">Hora da Selfie</div>
+  <video id="video" width="640" height="480" autoplay style="display: none;"></video>
+  <canvas id="canvas" width="640" height="480"></canvas>
+  <div id="controls" style="display: none;">
+    <button id="snap">Tirar Foto</button>
+    <button id="retry" style="display: none;">Tirar Outra</button>
+    <button id="send" style="display: none;">Enviar</button>
+  </div>
+
+  <script>
+    let video = document.getElementById('video');
+    let canvas = document.getElementById('canvas');
+    let snapButton = document.getElementById('snap');
+    let retryButton = document.getElementById('retry');
+    let sendButton = document.getElementById('send');
+    let context = canvas.getContext('2d');
+    let message = document.getElementById('message');
+    let controls = document.getElementById('controls');
+    let stream;
+
+    function startCamera() {
+      navigator.mediaDevices.getUserMedia({ video: true })
+        .then(function(mediaStream) {
+          stream = mediaStream;
+          video.srcObject = stream;
+          video.style.display = 'block';
+          controls.style.display = 'block';
+          message.style.display = 'none';
+          video.play();
+        })
+        .catch(function(err) {
+          console.log("Erro ao acessar a câmera: " + err);
+        });
+    }
+
+    function stopCamera() {
+      if (stream) {
+        let tracks = stream.getTracks();
+        tracks.forEach(track => track.stop());
+      }
+      video.style.display = 'none';
+      controls.style.display = 'none';
+      message.style.display = 'block';
+    }
+
+    // Mostra a mensagem e inicia a câmera depois de 3 segundos
+    setTimeout(startCamera, 3000);
+
+    // Tira a foto
+    snapButton.addEventListener('click', function() {
+      context.drawImage(video, 0, 0, 640, 480);
+      canvas.style.display = 'block';
+      video.style.display = 'none';
+      snapButton.style.display = 'none';
+      retryButton.style.display = 'inline-block';
+      sendButton.style.display = 'inline-block';
+      stopCamera();
+    });
+
+    // Tira outra foto
+    retryButton.addEventListener('click', function() {
+      canvas.style.display = 'none';
+      video.style.display = 'block';
+      snapButton.style.display = 'inline-block';
+      retryButton.style.display = 'none';
+      sendButton.style.display = 'none';
+      startCamera();
+    });
+
+    // Envia a foto
+    sendButton.addEventListener('click', function() {
+      canvas.toBlob(function(blob) {
+        var formData = new FormData();
+        formData.append('selfie', blob);
+
+        fetch('/enviar-selfie', {
+          method: 'POST',
+          body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+          console.log('Selfie enviada com sucesso:', data);
+          alert('Selfie enviada com sucesso!');
+        })
+        .catch(error => {
+          console.error('Erro ao enviar a selfie:', error);
+          alert('Erro ao enviar a selfie. Tente novamente.');
+        });
+      });
+    });
+  </script>
+</body>
+</html>
+<!-- partial -->
+  
+</body>
+</html>
